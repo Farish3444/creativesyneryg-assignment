@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useOrderBook } from './orderbookContext';
-// import './orderbook.scss';
+import './orderbook.scss';
 
 const OrderBook = () => {
+
   const { state, dispatch } = useOrderBook();
 
   useEffect(() => {
@@ -21,14 +22,16 @@ const OrderBook = () => {
         event: 'subscribe',
         channel: 'book',
         symbol: 'tBTCUSD'
-      }))
+      }));
     };
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      console.log(message)
       if (Array.isArray(message[1])) {
-        dispatch({ type: 'ADD_ORDERS', payload: message[1] });
+        const [price, count, amount] = message[1];
+        const channelID = message[0];
+        const bookEntry = { channelID, price, count, amount };
+        dispatch({ type: 'ADD_ORDERS', payload: [bookEntry] });
       }
     };
 
@@ -44,10 +47,27 @@ const OrderBook = () => {
 
   return (
     <div className="order-book">
-      {state.orders.map((order, index) => (
-        <div key={index}>{order}</div>
-      ))}
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Channel ID</th>
+          <th>Price</th>
+          <th>Count</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {state.orders.map((order, index) => (
+          <tr key={index}>
+            <td>{order.channelID}</td>
+            <td>{order.price}</td>
+            <td>{order.count}</td>
+            <td>{order.amount}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
   );
 };
 
